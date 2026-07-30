@@ -43,18 +43,13 @@
 
 `mermaid
 graph TD
-    A["👤 用户输入<br/>(自然语言)"] --> B["① 需求理解 Agent<br/>NLU 解析"]
-    B --> C["② 检索策略 Agent<br/>同义词扩展 + 检索式"]
-    C --> D["③ 知网搜索 Agent<br/>浏览器自动化"]
-    D --> E["④ 论文评分 Agent<br/>7维度打分"]
-    E --> F["⑤ 作者分析 Agent<br/>画像 + 机构 + 合作"]
-    F --> G["⑥ PDF整理 Agent<br/>下载 + 研究包"]
-    G --> H["📦 输出<br/>PDF/ + Excel + 报告"]
-
-    style A fill:#e1f5fe
-    style H fill:#e8f5e9
-    style D fill:#fff3e0
-    style E fill:#fce4ec
+    A[User Input] --> B[Agent 1: NLU]
+    B --> C[Agent 2: Search Strategy]
+    C --> D[Agent 3: CNKI Search]
+    D --> E[Agent 4: Paper Scoring]
+    E --> F[Agent 5: Author Analysis]
+    F --> G[Agent 6: PDF and Report]
+    G --> H[Output: PDF + Excel + Report]
 `
 
 ### 六 Agent 流水线
@@ -178,14 +173,14 @@ python -m copilot --query "知识图谱" --count 30 --source CSSCI --output ./re
 每篇论文满分 **100 分**，默认阈值 30 分：
 
 `mermaid
-pie title 评分维度权重
-    "引用量 (25)" : 25
-    "核心来源 (15)" : 15
-    "期刊等级 (15)" : 15
-    "主题匹配 (15)" : 15
-    "基金 (10)" : 10
-    "时效性 (10)" : 10
-    "摘要质量 (10)" : 10
+pie title Scoring Weight
+    "Citations 25" : 25
+    "Core Source 15" : 15
+    "Journal Tier 15" : 15
+    "Topic Match 15" : 15
+    "Fund 10" : 10
+    "Recency 10" : 10
+    "Abstract 10" : 10
 `
 
 | 维度 | 分值 | 评分规则 |
