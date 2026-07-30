@@ -23,13 +23,32 @@ class SearchRequest:
     raw_input: str = ""
 
 
-# 时间表达映射
-TIME_PATTERNS = {
-    r"近(\d+)年": lambda m: m.group(1),
-    r"最近(\d+)年": lambda m: m.group(1),
-    r"(\d{4})\s*[-–~至到]\s*(\d{4})": lambda m: (m.group(1), m.group(2)),
-    r"(\d{4})年以[来后]": lambda m: (m.group(1), ""),
-}
+# 中文数字映射
+CN_NUM_MAP = {"一": 1, "二": 2, "两": 2, "三": 3, "四": 4, "五": 5,
+              "六": 6, "七": 7, "八": 8, "九": 9, "十": 10,
+              "十一": 11, "十二": 12, "十五": 15, "二十": 20}
+
+
+def _cn_to_int(s: str) -> int:
+    """将中文数字或阿拉伯数字字符串转为int"""
+    s = s.strip()
+    if s.isdigit():
+        return int(s)
+    if s in CN_NUM_MAP:
+        return CN_NUM_MAP[s]
+    # 处理 "十X" 形式
+    if s.startswith("十") and len(s) == 2:
+        return 10 + CN_NUM_MAP.get(s[1], 0)
+    return 5  # 默认
+
+
+# 时间表达映射（支持中文数字和阿拉伯数字）
+TIME_PATTERNS = [
+    (r"近([\d一二两三四五六七八九十]+)年", lambda m: _cn_to_int(m.group(1))),
+    (r"最近([\d一二两三四五六七八九十]+)年", lambda m: _cn_to_int(m.group(1))),
+    (r"(\d{4})\s*[-–~至到]\s*(\d{4})", lambda m: (m.group(1), m.group(2))),
+    (r"(\d{4})年以[来后]", lambda m: (m.group(1), "")),
+]
 
 # 来源识别
 SOURCE_KEYWORDS = {
@@ -62,7 +81,7 @@ def parse_request(user_input: str) -> SearchRequest:
     from datetime import datetime
     current_year = datetime.now().year
 
-    for pat, handler in TIME_PATTERNS.items():
+    for pat, handler in TIME_PATTERNS:
         m = re.search(pat, user_input)
         if m:
             result = handler(m)
@@ -70,7 +89,7 @@ def parse_request(user_input: str) -> SearchRequest:
                 req.start_year = result[0]
                 req.end_year = result[1] or str(current_year)
             else:
-                years = int(result)
+                years = result if isinstance(result, int) else int(result)
                 req.start_year = str(current_year - years)
                 req.end_year = str(current_year)
             break
@@ -105,7 +124,7 @@ def parse_request(user_input: str) -> SearchRequest:
     # 7. 提取主题（去掉修饰词后的核心内容）
     # 简单策略：去掉时间、来源、数量等修饰，剩余为主题
     topic_text = user_input
-    topic_text = re.sub(r"近\d+年|最近\d+年|\d{4}\s*[-–~至到]\s*\d{4}", "", topic_text)
+    topic_text = re.sub(r"近[\d一二两三四五六七八九十]+年|最近[\d一二两三四五六七八九十]+年|\d{4}\s*[-–~至到]\s*\d{4}", "", topic_text)
     topic_text = re.sub(r"(cssci|cscd|sci|ei|北大核心|核心|c刊)", "", topic_text, flags=re.I)
     topic_text = re.sub(r"\d+\s*篇", "", topic_text)
     topic_text = re.sub(r"(期刊|论文|文章|博士|硕士|学位论文)", "", topic_text)
